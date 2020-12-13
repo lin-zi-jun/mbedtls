@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/jordan/mbedtls/Jordan/sha_256/test.c
+stdio.h
+-
+string.h
+-
+mbedtls/md.h
+/home/jordan/mbedtls/Jordan/sha_256/mbedtls/md.h
+mbedtls/platform.h
+/home/jordan/mbedtls/Jordan/sha_256/mbedtls/platform.h
+

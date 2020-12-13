@@ -1,0 +1,3 @@
+/home/jordan/mbedtls/Jordan/sha_256/build/CMakeFiles/rebuild_cache.dir
+/home/jordan/mbedtls/Jordan/sha_256/build/CMakeFiles/edit_cache.dir
+/home/jordan/mbedtls/Jordan/sha_256/build/CMakeFiles/test.dir
