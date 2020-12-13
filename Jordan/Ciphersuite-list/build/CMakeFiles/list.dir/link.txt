@@ -1,0 +1,1 @@
+/usr/bin/cc    CMakeFiles/list.dir/list.c.o  -o list  -lmbedtls -lmbedcrypto -lmbedx509 
