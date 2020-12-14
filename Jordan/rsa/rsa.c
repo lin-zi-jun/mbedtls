@@ -20,6 +20,7 @@
 // （n，e）公钥
 // （n，d）私钥
 
+
 // RSA私钥操作可以用中国剩余定理（CRT）进行加速执行，
 // 再mbedtls配置文件中通过MBEDTLS_RSA_NO_CRT宏打开CRT加速，（默认时打开的）
 
@@ -59,6 +60,9 @@ static int entropy_source(void *data, uint8_t *output, size_t len, size_t *olen)
     return 0;
 }*/
 
+
+// N和E是公钥
+// N、E、D、P、Q、DP、DQ、QP属于私钥，其中DP、DQ、QP用于加速解密过程
 static void dump_rsa_key(mbedtls_rsa_context *ctx)
 {
     size_t olen;
@@ -103,7 +107,7 @@ int main(void)
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
     const char *pers = "simple_rsa";
-    const char *msg = "Hello, World!";
+    const char *msg = "https://jordan-ota-test.s3.amazonaws.com/SenseE-SSR21-11.100.0.1.999.bin";
 
     mbedtls_entropy_init(&entropy);//初始化熵结构体
     mbedtls_ctr_drbg_init(&ctr_drbg);//初始化随机数结构体

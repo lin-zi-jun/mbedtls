@@ -655,12 +655,14 @@ int mbedtls_rsa_pkcs1_encrypt( mbedtls_rsa_context *ctx,
 {
     switch( ctx->padding )
     {
+//填充方案1
 #if defined(MBEDTLS_PKCS1_V15)
         case MBEDTLS_RSA_PKCS_V15:
             return mbedtls_rsa_rsaes_pkcs1_v15_encrypt( ctx, f_rng, p_rng, mode, ilen,
                                                 input, output );
 #endif
 
+// 填充方案2
 #if defined(MBEDTLS_PKCS1_V21)
         case MBEDTLS_RSA_PKCS_V21:
             return mbedtls_rsa_rsaes_oaep_encrypt( ctx, f_rng, p_rng, mode, NULL, 0,
