@@ -1,0 +1,1 @@
+/usr/bin/cc    CMakeFiles/rsa.dir/rsa.c.o  -o rsa  -lmbedtls -lmbedcrypto -lmbedx509 

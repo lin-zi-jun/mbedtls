@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/jordan/mbedtls/Jordan/rsa/rsa.c
+stdio.h
+-
+string.h
+-
+stdint.h
+-
+stdio.h
+-
+string.h
+-
+mbedtls/rsa.h
+/home/jordan/mbedtls/Jordan/rsa/mbedtls/rsa.h
+mbedtls/entropy.h
+/home/jordan/mbedtls/Jordan/rsa/mbedtls/entropy.h
+mbedtls/ctr_drbg.h
+/home/jordan/mbedtls/Jordan/rsa/mbedtls/ctr_drbg.h
+mbedtls/platform.h
+/home/jordan/mbedtls/Jordan/rsa/mbedtls/platform.h
+
