@@ -126,3 +126,70 @@ client收到server.crt后用ca.crt来验证server的合法性，如果不合法�
 客户端握手结束通知，也包含前面所有内容hash，用于给客户端校验
 第三步、第四步提到的会话秘钥是由第一、二、三步产生的随机数通过双方事先商定好的秘钥生成机制生成出对称秘钥，
 之后在本次回话中双方都是用这个对称秘钥来加密解密信息。
+
+
+
+
+
+
+
+
+
+
+
+TLS框架
+TLS是一种加密通讯框架，有下面3个阶段
+
+密钥交换阶段，伪随机数生成、ECDH、ECDSA、RSA、还有X509证书
+密钥计算阶段，HMAC算法，如HMAC-256
+对称加密阶段，AES算法和HMAC算法，AES-CBC、AES-GCM、HMAC-256等
+TLS密码套件
+通讯双方需要有相同的密码运算能力才能完成密钥交换和消息加密解密。IANA规定了多种密码套件（Cipher Suite），
+通讯双方根据约定好的密码套件进行加密。密码套件由密钥协商算法、身份认证算法、对称加密算法、消息认证码和伪随机数组成
+
+TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+密钥协商算法 ECDHE
+身份认证算法 ECDSA
+对称加密算法 AES_256
+消息认证算法 GCM
+伪随机数算法 SHA384
+
+TLS_PSK_WITH_AES_128_CBC_SHA256
+密钥协商算法 PSK
+身份认证算法 无
+对称加密算法 AES_128_CBC
+消息认证算法 HMAC_SHA256
+伪随机数算法 HMAC_SHA256
+
+TLS_RSA_WITH_AES_128_CBC_SHA256
+密钥协商算法 RSA
+身份认证算法 RSA
+对称加密算法 AES_128_CBC
+消息认证算法 HMAC_SHA256
+伪随机数算法 HMAC_SHA256
+
+TLS_DHE_RSA_WITH_AES_128_CBC_SHA256
+密钥协商算法 DHE
+身份认证算法 RSA
+对称加密算法 AES_128_CBC
+消息认证算法 HMAC_SHA256
+伪随机数算法 HMAC_SHA256
+
+握手过程
+这里理解大概流程https://blog.csdn.net/weixin_41572450/article/details/84112992
+
+
+PSK密钥交换
+可以看到密码套件有一个TLS_PSK_WITH_AES_128_CBC_SHA256这种就是采用PSK密钥交换，不是用X.509证书交换。
+对于互联网来说1k多的证书毫无压力，但是对于嵌入式设备来说，希望减小传输开销，PSK就是这个目的。
+当然只有在客户端和服务器都支持才能使用。
+
+PSK Identity 和 PSK
+PSK Identity 和 PSK其实就是类似用户名和登录密钥概念，PSK Identity 常用字符串表示，如出厂编号、
+CPUID等信息，PSK一般采用Hex格式表示。不同的设备PSK Identity 和 PSK不同。当客户端告知服务器自身的PSK Identity 后，
+服务器根据告知的PSK Identity 找到对应的PSK，拿这个PSK最作为第三个随机数即预设主密钥，结合前面的2个随机数生成对称密钥。
+客户端也是这样。可以看到者中间少了证书传递的开销。
+
+例子
+下面是TLS单、双向认证客户端源码、相关证书生成脚本、TLS客户端、服务器创建脚本、wireshark抓包分析、客户端连接过程log。
+https://download.csdn.net/download/weixin_41572450/12001752
