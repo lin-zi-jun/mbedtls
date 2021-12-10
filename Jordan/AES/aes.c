@@ -1,11 +1,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <ctype.h>
 
 #include "mbedtls/cipher.h"
 #include "mbedtls/platform.h"
-#include "mbedtls/base64.h"
 
 // ECB(Electronic Code Book电子密码本)模式
 // ECB模式是最早采用和最简单的模式，它将加密的数据分成若干组，每组的大小跟加密密钥长度相同，然后每组都用相同的密钥进行加密。
@@ -27,9 +25,18 @@
     key = 06a9214036b8a15b512e03d534120006
     iv  = 3dafba429d9eb430b422da802c9fac41
 */
-uint8_t key[16];
-uint8_t iv[16];
+char *ptx = "CBC has been the most commonly used mode of operation.";
+uint8_t key[16] =
+{
+    0x06, 0xa9, 0x21, 0x40, 0x36, 0xb8, 0xa1, 0x5b,
+    0x51, 0x2e, 0x03, 0xd5, 0x34, 0x12, 0x00, 0x06
+};
 
+uint8_t iv[16] =
+{
+    0x3d, 0xaf, 0xba, 0x42, 0x9d, 0x9e, 0xb4, 0x30,
+    0xb4, 0x22, 0xda, 0x80, 0x2c, 0x9f, 0xac, 0x41
+};
 
 static void dump_buf(char *info, uint8_t *buf, uint32_t len)
 {
@@ -45,112 +52,126 @@ int my_aes_init(int type,mbedtls_cipher_context_t *ctx,const unsigned char *key,
         int key_bitlen, const mbedtls_operation_t operation,const unsigned char *iv, size_t iv_len)
 {
     const mbedtls_cipher_info_t *info;
+
     mbedtls_cipher_init(ctx);
     info = mbedtls_cipher_info_from_type(type);
+
     mbedtls_cipher_setup(ctx, info);
+    mbedtls_printf("\n  cipher info setup, name: %s, block size: %d\n", 
+                        mbedtls_cipher_get_name(ctx), 
+                        mbedtls_cipher_get_block_size(ctx));
+
     mbedtls_cipher_setkey(ctx, key, key_bitlen, operation);
     mbedtls_cipher_set_iv(ctx, iv, iv_len);
 	return 0;
 }
 
-
-#define DEBUG_PK printf
-static char *sgStandCharBlack="0123456789ABCDEF";
-void DbgPrinStr( const char *iStr,void *iPD,int iLen){
-    char    *tPD = (char*)iPD;
-    int     _i,_j, _k, _s, _c;
-    char    tTppl[4];
-    char    tvPrintBuf[ 128 ];
-
-    tTppl[2] = '\0';
-
-    DEBUG_PK("%s\n",(char*)iStr);
-    for( _i=0; _i<10; _i++ )
-        tvPrintBuf[ 49 + _i ] = ' ';
-    _i = 0;
-    while(_i<iLen){
-        _c = 0;
-        for(_j=0;(_j<16)&&((_i+_j)<iLen);_j++){
-            tvPrintBuf[ _c++ ] = sgStandCharBlack[(tPD[_i+_j]&0xF0)>>4];
-            tvPrintBuf[ _c++ ] = sgStandCharBlack[tPD[_i+_j]&0x0F];
-            tvPrintBuf[ _c++ ] = ' ';
-            if(_j == 7) tvPrintBuf[ _c++ ] = ' ';
-        }
-        _s = 49 - (_j*3) - _j/8;
-        for( _k=0;_k<_s;_k++ )
-            tvPrintBuf[ _c++ ] = ' ';
-
-        _c += 10;
-
-        for(_j=0;(_j<16)&&(_i<iLen);_j++){
-            if( ( isprint( tPD[_i] ) ) && ( tPD[_i] != '\r' ) && ( tPD[_i] != '\n' ) )
-                tvPrintBuf[ _c++ ] = tPD[_i];
-            else
-                tvPrintBuf[ _c++ ] = '.';
-            _i++;
-        }
-        tvPrintBuf[ _c++ ] = '\r';
-        tvPrintBuf[ _c++ ] = '\n';
-        tvPrintBuf[ _c++ ] = '\0';
-        DEBUG_PK( "%s", tvPrintBuf );
-    }
+int my_aes_update(mbedtls_cipher_context_t *ctx, const unsigned char *input,
+                   size_t ilen, unsigned char *output, size_t *olen )
+{
+	return mbedtls_cipher_update(ctx, input,ilen, output,olen);
 }
 
-
-
-int main(int argc ,char *argv[])
+int my_aes_finish(mbedtls_cipher_context_t *ctx,unsigned char *output, size_t *olen )
 {
-  uint8_t md5_data[16]={0};
-  uint8_t buf[128] = {0};
+	return mbedtls_cipher_finish(ctx,output,olen);
+}
 
-  if(argc!=4){
-    printf("please input correct parameter --> key + iv + data\n");
-    return -1;
-  }
+void my_aes_deinit(mbedtls_cipher_context_t *ctx)
+{
+	mbedtls_cipher_free(ctx);
+}
 
-  if((strlen(argv[1])!=16)||(strlen(argv[2])!=16)){
-    printf("%s\n",argv[1]);
-    printf("please input correct 16-byte key or iv value\r\n");
-    return -1;
-  }
+int main(void)
+{
+
     size_t len;
     int olen = 0;
-	size_t len1;
-	uint8_t buf1[256];
-	uint8_t buf2[1024];
+    uint8_t buf[256];
 	
-    // MBEDTLS_CIPHER_AES_128_CBC enc
+    //MBEDTLS_CIPHER_AES_128_CBC enc
 	mbedtls_cipher_context_t aes_cbc_128_ctx;
 	// my_aes_init(MBEDTLS_CIPHER_AES_128_CBC,&aes_cbc_128_ctx,key,sizeof(key)*8,MBEDTLS_ENCRYPT,iv,sizeof(iv));
 
-	// olen = 0;
-	// memset(buf,0,sizeof(buf));
-	// mbedtls_cipher_update(&aes_cbc_128_ctx,ptx,strlen(ptx),buf,&len);
-	// olen += len;
-	// mbedtls_cipher_finish(&aes_cbc_128_ctx,buf+olen,&len);
-	// olen += len;
-	// mbedtls_cipher_free(&aes_cbc_128_ctx);
-	// DbgPrinStr("加密",buf,olen);
 
-	
-	// mbedtls_base64_encode(buf1,sizeof(buf1),&len1,buf,olen);
-	// printf("base64:%s\r\n",buf1);
+	 const mbedtls_cipher_info_t *info;
+
+    mbedtls_cipher_init(&aes_cbc_128_ctx);
+    info = mbedtls_cipher_info_from_type(MBEDTLS_CIPHER_AES_128_CBC);
+
+    mbedtls_cipher_setup(&aes_cbc_128_ctx, info);
+    mbedtls_printf("\n  cipher info setup, name: %s, block size: %d\n", 
+mbedtls_cipher_get_name(&aes_cbc_128_ctx), 
+                        mbedtls_cipher_get_block_size(&aes_cbc_128_ctx));
+
+    mbedtls_cipher_setkey(&aes_cbc_128_ctx, key, sizeof(key)*8, MBEDTLS_DECRYPT);
+    mbedtls_cipher_set_iv(MBEDTLS_DECRYPT, iv, sizeof(iv));
 
 
-	// printf("key:%s\niv:%s\ndata:%s\n",argv[1],argv[2],argv[3]);
-	mbedtls_base64_decode(buf2,sizeof(buf2),&len1,argv[3],strlen(argv[3]));
-	DbgPrinStr("base64 decode:",buf2,len1);
+	olen = 0;
+	memset(buf,0,sizeof(buf));
+	my_aes_update(&aes_cbc_128_ctx,ptx,strlen(ptx),buf,&len);
+	olen += len;
+    my_aes_update(&aes_cbc_128_ctx,ptx,strlen(ptx),buf+olen,&len);
+	olen += len;
+	my_aes_finish(&aes_cbc_128_ctx,buf+olen,&len);
+	olen += len;
+	my_aes_deinit(&aes_cbc_128_ctx);
+	dump_buf("\n cbc cipher aes encrypt:", buf, olen);
+    printf("%d\n",olen);
 
     int text_olen = 0;len = 0;
-    uint8_t text_buf[1024];
-	my_aes_init(MBEDTLS_CIPHER_AES_128_CBC,&aes_cbc_128_ctx,argv[1],strlen(argv[1])*8,MBEDTLS_DECRYPT,argv[2],strlen(argv[2]));
+    uint8_t text_buf[256];
+	//MBEDTLS_CIPHER_AES_128_CBC dec
+	my_aes_init(MBEDTLS_CIPHER_AES_128_CBC,&aes_cbc_128_ctx,key,sizeof(key)*8,MBEDTLS_DECRYPT,iv,sizeof(iv));
 	memset(text_buf,0,sizeof(text_buf));
-	mbedtls_cipher_update(&aes_cbc_128_ctx,buf2,len1,text_buf,&len);
+	my_aes_update(&aes_cbc_128_ctx,buf,olen,text_buf,&len);
 	text_olen +=len;
-	mbedtls_cipher_finish(&aes_cbc_128_ctx,text_buf+text_olen,&len);
+	my_aes_finish(&aes_cbc_128_ctx,text_buf+text_olen,&len);
 	text_olen += len;
-	mbedtls_cipher_free(&aes_cbc_128_ctx);
-	DbgPrinStr("AES CBC decode:",text_buf,text_olen);
+	my_aes_deinit(&aes_cbc_128_ctx);
+	printf("text_olen :%d strlen(text_buf): %ld\n",text_olen,strlen(text_buf));
+	dump_buf("\n cbc text aes decrypt:", text_buf, text_olen);
+	dump_buf("\n cbc text aes decrypt:", text_buf, strlen(text_buf));
+
+    //del padding 
+    int del_cnt = text_buf[strlen(text_buf)-1];
+	while(del_cnt)
+	{
+		text_buf[text_olen+del_cnt-1] = 0;
+		del_cnt--;
+	}
+	printf("cbc decrypt: %s\n",text_buf);
+//===========================================================
+    //MBEDTLS_CIPHER_AES_128_CTR enc
+	mbedtls_cipher_context_t aes_ctr_128_ctr;
+	my_aes_init(MBEDTLS_CIPHER_AES_128_CTR,&aes_ctr_128_ctr,key,sizeof(key)*8,MBEDTLS_ENCRYPT,iv,sizeof(iv));
+	olen = 0;
+	memset(buf,0,sizeof(buf));
+	my_aes_update(&aes_ctr_128_ctr,ptx,strlen(ptx),buf,&len);
+	olen += len;
+    my_aes_update(&aes_ctr_128_ctr,ptx,strlen(ptx),buf+olen,&len);
+	olen += len;
+	my_aes_finish(&aes_ctr_128_ctr,buf+olen,&len);
+	olen += len;
+	my_aes_deinit(&aes_ctr_128_ctr);
+	dump_buf("\n ctr cipher aes encrypt:", buf, olen);
+    printf("%d\n",olen);
+
+    text_olen = 0;len = 0;
+	//MBEDTLS_CIPHER_AES_128_CTR dec
+	my_aes_init(MBEDTLS_CIPHER_AES_128_CTR,&aes_ctr_128_ctr,key,sizeof(key)*8,MBEDTLS_DECRYPT,iv,sizeof(iv));
+	memset(text_buf,0,sizeof(text_buf));
+	my_aes_update(&aes_ctr_128_ctr,buf,olen,text_buf,&len);
+	text_olen +=len;
+	my_aes_finish(&aes_ctr_128_ctr,text_buf+text_olen,&len);
+	text_olen += len;
+	my_aes_deinit(&aes_ctr_128_ctr);
+	printf("text_olen :%d strlen(text_buf) :%ld\n",text_olen,strlen(text_buf));
+	dump_buf("\n cbc text aes decrypt:", text_buf, text_olen);
+	dump_buf("\n cbc text aes decrypt:", text_buf, strlen(text_buf));
+
+	printf("ctr decrypt: %s\n",text_buf);
 
     return 0;
 }
